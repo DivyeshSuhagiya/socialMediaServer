@@ -40,38 +40,38 @@ exports.user = {
   },
   login: async (req, res) => {
     try {
-        let userInfo = await USER.findOne({
-            email: req.body.email,
+      let userInfo = await USER.findOne({
+        email: req.body.email,
+      });
+      if (!userInfo) {
+        return notFoundResponse(res, {
+          message: "Email not found!",
         });
-        if (!userInfo) {
-            return notFoundResponse(res, {
-                message: "Email not found!",
-            });
-        }
-        if (!bcrypt.compareSync(req.body.password, userInfo.password)) {
-            return badRequestResponse(res, {
-                message: "Authentication failed. Wrong password.",
-            });
-        }
-        if (!userInfo.isActive) {
-            return badRequestResponse(res, {
-                message:
-                    "Your account is deactivated, please activate your account from here",
-                accountDeactive: true,
-            });
-        }
-        var token = jwt.sign(userInfo.toJSON(), process.env.secret, {
-            expiresIn: "24h", // expires in 24 hours
+      }
+      if (!bcrypt.compareSync(req.body.password, userInfo.password)) {
+        return badRequestResponse(res, {
+          message: "Authentication failed. Wrong password.",
         });
-        return successResponse(res, {
-            message: "You are logged in successfully!",
-            token,
-            userInfo,
+      }
+      if (!userInfo.isActive) {
+        return badRequestResponse(res, {
+          message:
+            "Your account is deactivated, please activate your account from here",
+          accountDeactive: true,
         });
+      }
+      var token = jwt.sign(userInfo.toJSON(), process.env.secret, {
+        expiresIn: "24h", // expires in 24 hours
+      });
+      return successResponse(res, {
+        message: "You are logged in successfully!",
+        token,
+        userInfo,
+      });
     } catch (error) {
-        return errorResponse(error, req, res);
+      return errorResponse(error, req, res);
     }
-},
+  },
   register: async function (req, res) {
     try {
       const userInfo = await USER.findOne({
@@ -87,82 +87,28 @@ exports.user = {
           message: "Password and Confirm Password must be same",
         });
       }
-      
+
       const user = {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
         mobile: req.body.mobile,
         password: req.body.password,
-        birthDate:req.body.birthDate,
-        isActive: false
+        birthDate: req.body.birthDate,
+        isActive: true
       };
-      const otpCode = this.getOtpCode();
-      if(req.file)
-      {
+      if (req.file) {
         user.profileImage = req.file.path;
       }
-
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.gmailUserName,
-          pass: process.env.gmailPassword,
-        },
-      });
-
-      const emailSended = await transporter.sendMail({
-        from: "Practice Math",
-        to: req.body.email,
-        subject: "Your OTP",
-        text: "Please activate your account in order to use the SDC Media APP - SDC Media APP",
-        html: `<h2>Thank you signup with SDC Media APP - SDC Media APP. <br />Your account activation code is: ${otpCode}.</h2>`,
-      });
-
-      if (emailSended.accepted) {
-        user.accountActivationCode = otpCode;
-        var isCreated = await USER.create(user);
-        if (isCreated) {
-          let time = await USER.findOne({
-            email: req.body.email,
-          })
-          let dt = new Date(time.createdAt)
-          let a = dt.getMinutes() + 2;
-
-          console.log(dt.getMinutes())
-          if (a == 60) {
-            a = 0;
-          }
-          else if (a == 61) {
-            a = 1;
-          }
-          console.log(a)
-
-          cron.schedule(`${a} * * * *`, async () => {
-
-            if (time.isActive !== false) {
-              console.log(time.isActive)
-              await USER.findOneAndRemove({
-                email: req.body.email,
-              })
-            }
-            else {
-              console.log(time.isActive)
-            }
-          })
-          return successResponse(res, {
-            message: "User created!",
-          });
-
-        }
-        else {
-          return badRequestResponse(res, {
-            message: "Failed to create user",
-          });
-        }
-      } else {
+      var isCreated = await USER.create(user);
+      if (isCreated) {
+        return successResponse(res, {
+          message: "User created!",
+        });
+      }
+      else {
         return badRequestResponse(res, {
-          message: "Failed to send account activation code",
+          message: "Failed to create user",
         });
       }
 
@@ -355,4 +301,35 @@ exports.user = {
   getOtpExpireTime: function () {
     return new Date(new Date().getTime() + 10 * 60000);
   },
+  update: async (req, res) => {
+    try {
+      const userInfo = await USER.findOne({
+        _id: req.body._id,
+      })
+      if (!userInfo) {
+        return badRequestResponse(res, {
+          message: 'User not found',
+        })
+      }
+      await USER.findOneAndUpdate(
+        { _id: userInfo._id },
+        {
+          $set: {
+              firstName: req.body.firstName,
+              lastName: req.body.lastName,
+              email: req.body.email,
+              mobile: req.body.mobile,
+              birthDate: req.body.birthDate,
+              isActive: true,
+              profileImage : req.file ? req.file.path : req.body.profileImage
+              }
+          },
+      )
+      return successResponse(res, {
+        message: 'User updated successfully',
+      })
+    } catch (error) {
+      return errorResponse(error, req, res)
+    }
+  }
 }
