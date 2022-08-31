@@ -39,6 +39,76 @@ exports.userPost = {
       })
     }
   },
+  like: async function (req, res) {
+    try {
+      const userInfo = await USERPOST.findOne({
+        _id: req.body._id,
+      });
+      if (!userInfo) {
+        return badRequestResponse(res, {
+          message: "This post is not found!",
+        });
+      }
+      const userLike = {
+        userId: req.body.userId,
+        isLike: req.body.isLike
+      }
+
+      const findData = await USERPOST.find(
+        { _id: req.body._id ,like: { $elemMatch: { userId: req.body.userId } } }
+      )
+      let aa = true;
+      if (findData.length > 0) {
+        aa = false
+        console.log(findData);
+      }
+
+      if (userLike.isLike == true && aa) {
+        const isCreated = await USERPOST.findByIdAndUpdate(
+          { _id: req.body._id },
+          { $push: { like: userLike } }
+        )
+        if (isCreated) {
+          return successResponse(res, {
+            message: 'Like push Successfull',
+          })
+        }
+      }
+
+
+      if (req.body.isLike == false && !aa) {
+        const isCreated = await USERPOST.findByIdAndUpdate(
+          { _id: req.body._id },
+          { $pull: { like:{ userId: req.body.userId} } }
+        )
+        if (isCreated) {
+          console.log(isCreated);
+          return successResponse(res, {
+            message: 'Like pull Successfull',
+          })
+        }
+      }
+      else {
+        return successResponse(res, {
+          message: 'Like not push',
+        })
+      }
+
+      // if(userLike.isLike == false) {
+      //   const isCreated = await USERPOST.findByIdAndUpdate(
+      //     { _id: req.body._id },
+      //     { $pop: { like : {userId: req.body.userId} } }
+      //   )
+      //   if (isCreated) {
+      //     return successResponse(res, {
+      //       message: 'Like pop Successfull',
+      //     })
+      //   }
+      // }
+    } catch (error) {
+      return errorResponse(error, req, res);
+    }
+  },
   post: async function (req, res) {
     try {
       const userInfo = await USER.findOne({

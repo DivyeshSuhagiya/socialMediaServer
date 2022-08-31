@@ -7,5 +7,6 @@ const uploadPost = require('../middleware/uploadPost')
 router.get('/get' , (req,res) => userPostController.userPost.get(req,res));
 
 router.post('/post' ,uploadPost, (req,res) => userPostController.userPost.post(req,res));
+router.put('/like' , (req,res) => userPostController.userPost.like(req,res));
 
 module.exports = router

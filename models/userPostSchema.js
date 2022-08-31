@@ -24,7 +24,11 @@ var userPostSchema = new mongoose.Schema(
       trim:true
     },
     like:{
-      type: String
+      type: [{
+        userId :String,
+        isLike : Boolean 
+      }],
+      default:[]
     }
   },
   {
