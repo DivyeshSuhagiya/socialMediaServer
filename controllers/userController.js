@@ -331,5 +331,178 @@ exports.user = {
     } catch (error) {
       return errorResponse(error, req, res)
     }
-  }
+  },
+  followRequest: async function (req, res) {
+    try {
+      const userInfo = await USER.findOne({
+        _id: req.body._id,
+      });
+      if (!userInfo) {
+        return badRequestResponse(res, {
+          message: "This User is not found!",
+        });
+      }
+      const userFollow = {
+        userId: req.body.userId,
+        isFollow: false
+      }
+      const findData = await USER.find(
+        { _id: req.body._id ,follower: { $elemMatch: { userId: req.body.userId } } }
+      )
+      let aa = true;
+      if (findData.length > 0) {
+        aa = false
+        console.log(findData);
+      }
+
+      if (userFollow.isFollow == false && aa) {
+        const isCreated = await USER.findByIdAndUpdate(
+          { _id: req.body._id },
+          { $push: { follower: userFollow } }
+        )
+        if (isCreated) {
+          return successResponse(res, {
+            message: 'Follow Request Send Successfully',
+          })
+        }
+      }
+      else {
+        return successResponse(res, {
+          message: 'Follow Request not Send!!',
+        })
+      }
+    } catch (error) {
+      return errorResponse(error, req, res);
+    }
+  },
+  followAccept: async function (req, res) {
+    try {
+      const userInfo = await USER.findOne({
+        _id: req.body._id,
+      });
+      if (!userInfo) {
+        return badRequestResponse(res, {
+          message: "This User is not found!",
+        });
+      }
+      const userFollow = {
+        userId: req.body.userId,
+        isFollow: true
+      }
+      const findData = await USER.find(
+        { _id: req.body._id ,follower: { $elemMatch: { userId: req.body.userId } } }
+      )
+      let aa = false;
+      if (findData.length > 0) {
+        aa = true
+        console.log(findData);
+      }
+
+      if (userFollow.isFollow == true && aa) {
+        const isCreated = await USER.findByIdAndUpdate(
+          { _id: req.body._id ,follower: { $elemMatch: { userId: req.body.userId } } },
+          { $set: { follower: userFollow } }
+        )
+        if (isCreated) {
+          return successResponse(res, {
+            message: 'Follow Request Accept Successfully',
+          })
+        }
+      }
+      else {
+        return successResponse(res, {
+          message: 'Follow Request Not Accepted!!',
+        })
+      }
+    } catch (error) {
+      return errorResponse(error, req, res);
+    }
+  },
+  followDelete: async function (req, res) {
+    try {
+      const userInfo = await USER.findOne({
+        _id: req.body._id,
+      });
+      if (!userInfo) {
+        return badRequestResponse(res, {
+          message: "This User is not found!",
+        });
+      }
+      const userFollow = {
+        userId: req.body.userId,
+        isFollow: req.body.isFollow
+      }
+      const findData = await USER.find(
+        { _id: req.body._id ,follower: { $elemMatch: { userId: req.body.userId } } }
+      )
+
+      let aa = false;
+      if (findData.length > 0) {
+        aa = true
+        console.log(findData);
+      }
+
+      if (userFollow.isFollow == false && aa) {
+        const isCreated = await USER.findByIdAndUpdate(
+          { _id: req.body._id },
+          { $pull: { follower:{ userId: req.body.userId} } }
+        )
+        if (isCreated) {
+          return successResponse(res, {
+            message: 'Follow Request Delete Successfully',
+          })
+        }
+      }
+      else {
+        return successResponse(res, {
+          message: 'Follow Request Not Deleted!!',
+        })
+      }
+    } catch (error) {
+      return errorResponse(error, req, res);
+    }
+  },
+  unFollow: async function (req, res) {
+    try {
+      const userInfo = await USER.findOne({
+        _id: req.body._id,
+      });
+      if (!userInfo) {
+        return badRequestResponse(res, {
+          message: "This User is not found!",
+        });
+      }
+      const userFollow = {
+        userId: req.body.userId,
+        isFollow: req.body.isFollow
+      }
+      const findData = await USER.find(
+        { _id: req.body._id ,follower: { $elemMatch: { userId: req.body.userId } } }
+      )
+      let aa = false;
+      if (findData.length > 0) {
+        aa = true
+        console.log(findData);
+      }
+
+      if (userFollow.isFollow == true && aa) {
+        const isCreated = await USER.findByIdAndUpdate(
+          { _id: req.body._id },
+          { $pull: { follower:{ userId: req.body.userId} } }
+        )
+        if (isCreated) {
+          return successResponse(res, {
+            message: 'User unfollow Successfully',
+          })
+        }
+      }
+      else {
+        return successResponse(res, {
+          message: 'User NOt unfollow Successfully!!',
+        })
+      }
+    } catch (error) {
+      return errorResponse(error, req, res);
+    }
+  },
 }

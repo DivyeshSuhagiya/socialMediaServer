@@ -63,6 +63,13 @@ var userSchema = new mongoose.Schema(
     createdBy: {
       type: String,
       default: false,
+    },
+    follower:{
+      type: [{
+        userId :String,
+        isFollow : Boolean 
+      }],
+      default:[]
     }
   },
   {
